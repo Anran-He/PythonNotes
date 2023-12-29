@@ -1,3 +1,13 @@
+# Contents
+[1. Pass argument to Python from command line](#1)  
+[2. csv-reader](#2)  
+[3. web-scraping-with-selenium](#3)  
+[4. convert-rows-to-columns-and-columns-to-rows](#4)  
+[5. Pandas: convert numerical column (with NA) to integer data type](#5)  
+[6. Delete files older than N days](#6)
+
+<p id = "1"></p>
+
 # 1. Pass argument to Python from command line
 Sometimes user input is needed during programme running process. Though we can achieve it simply from Python terminal, I need to do it from command line somehow. The advantage is that multiple types of programmes (including Python, R, VBS) can be run through one double-click (.bat file), rather than run each programme one by one.
 ### Step 1: Prepare Python file to get argument
@@ -19,6 +29,7 @@ set /p b=Second argument:
 python "python path.py" %a% %b%
 pause
 ```
+<p id = "2"></p>
 
 # 2. CSV reader
 The CSV file is opened as a text file with Python's built-in open() function, which returns a file object. This is then passed to the reader, which does the heavy lifting.
@@ -85,6 +96,7 @@ for row in rows[:2]:
         print(col, end="    ")
     print('\n')
 ```
+<p id = "3"></p>
 
 # 3. Web scraping with selenium
 Sometimes we need to scrape webpages and store some information into dataframes. One way to achieve this goal is using selenium, which is a built-in package of Python.
@@ -145,6 +157,7 @@ for i in range(0,len(title_list)):
 data_tuples = list(zip(title_list[0:],link_list[0:])) 
 df = pd.DataFrame(data_tuples, columns=['Title','Link'])
 ```
+<p id = "4"></p>
 
 # 4. Convert rows to columns and columns to rows
 From time to time, we need to showcase information through different table formats. Sometimes, I want to convert values into headers, and sometimes, I feel like converting headers into values. This conversion involves pivot and melt function, we'd better understand and apply them flexibly to help us present data in a better way.
@@ -213,6 +226,8 @@ transposed_df = transposed_df.sort_values(['Date','Time'])
 ```
 ![Alt text](image-8.png)
 
+<p id = "5"></p>
+
 # 5. Pandas: convert numerical column (with NA) to integer data type
 This is a common step of data manipulation, which seems easy. However, I ran into an error once, saying that "cannot convert NA to integer". This situation would occur if there exist NA values in the conlumn which requires data type conversion.
 
@@ -253,6 +268,8 @@ Now the data frame is successfully converted.
 Reason: **Pandas primarily uses NaN to represent missing data, and it is a float.** Therefore, this forces an array of integers with even one missing value to become floating point.
 Pandas can represent integer data with possibly missing values using arrays.IntegerArray.
 
+<p id = "6"></p>
+
 # 6. Delete files older than N days
 This action is always required when it comes to house keeping. Nothing to say here, just share codes below.
 
@@ -274,7 +291,7 @@ for f in all_files:
     file_time = os.path.getctime(file_path)
     file_date = datetime.fromtimestamp(file_time)
     day_gap = (today-file_date).days
-    
+
     if day_gap > 30:
         os.remove(file_path)
 ```
@@ -305,4 +322,3 @@ for f in all_files:
     if days < 2:
          os.remove(file_path)
 ```
-
