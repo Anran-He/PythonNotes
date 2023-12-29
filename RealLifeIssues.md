@@ -213,3 +213,96 @@ transposed_df = transposed_df.sort_values(['Date','Time'])
 ```
 ![Alt text](image-8.png)
 
+# 5. Pandas: convert numerical column (with NA) to integer data type
+This is a common step of data manipulation, which seems easy. However, I ran into an error once, saying that "cannot convert NA to integer". This situation would occur if there exist NA values in the conlumn which requires data type conversion.
+
+Here is an example.
+
+### Step 1: Create a simple data frame
+This data frame has no meaning at all :) Column "Number" should be integer data type, but somehow the values are decimal numbers. Please note that 
+there is a missing value.
+
+```py
+import pandas as pd
+
+df=pd.DataFrame([['John',7.0],['Mary',3.0],['Anna',5.0],['Tom',]],columns=['Name','Number'])
+```
+
+![Alt text](image-9.png)
+
+### Step 2: Convert column data type from float to integer
+**Wrong:**
+```py
+df['Number'] = df['Number'].astype("int")
+df['Number'] = df['Number'].astype("int64")
+```
+
+Error would occur after this step.
+
+![Alt text](image-10.png)
+
+**Correct:**
+```py
+df['Number'] = df['Number'].astype("Int64")
+```
+
+Now the data frame is successfully converted.  
+
+![Alt text](image-11.png)
+
+Reason: **Pandas primarily uses NaN to represent missing data, and it is a float.** Therefore, this forces an array of integers with even one missing value to become floating point.
+Pandas can represent integer data with possibly missing values using arrays.IntegerArray.
+
+# 6. Delete files older than N days
+This action is always required when it comes to house keeping. Nothing to say here, just share codes below.
+
+### Scenario 1: delete files based on file creation time
+```py
+import os
+from datetime import datetime
+import glob
+
+source_folder = r"your folder path" # remember to add "\\" in the end
+
+# delete file by ctime
+today = datetime.now()
+
+all_files = glob.glob(source_folder + "*.csv")
+
+for f in all_files:
+    file_path = os.path.join(source_folder,f)
+    file_time = os.path.getctime(file_path)
+    file_date = datetime.fromtimestamp(file_time)
+    day_gap = (today-file_date).days
+    
+    if day_gap > 30:
+        os.remove(file_path)
+```
+
+### Scenario 2: delete files based on the date string in file name
+```py
+
+import os
+from datetime import datetime
+import glob
+
+source_folder = r"your folder path" # remember to add "\\" in the end
+
+today = today.date()
+
+for f in all_files:
+    file_path = os.path.join(source_folder,f)
+
+    basename = os.path.basename(f).split('/')[-1]
+
+    # slicing is based on your filename format
+    file_date = basename[-18:-10]
+   
+    file_date = datetime.strptime(file_date,'%Y%m%d').date()
+    day_gap = today - file_date
+    days = day_gap.days
+
+    if days < 2:
+         os.remove(file_path)
+```
+
