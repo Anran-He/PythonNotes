@@ -1,10 +1,12 @@
 # Contents
 [1. Pass argument to Python from command line](#1)  
-[2. csv-reader](#2)  
-[3. web-scraping-with-selenium](#3)  
-[4. convert-rows-to-columns-and-columns-to-rows](#4)  
+[2. CVS Reader](#2)  
+[3. Web Scraping With Selenium](#3)  
+[4. Convert Rows To Columns And Columns To Rows](#4)  
 [5. Pandas: convert numerical column (with NA) to integer data type](#5)  
-[6. Delete files older than N days](#6)
+[6. Delete files older than N days](#6)   
+[7. Call SAP from Python, R, VBS](#7)  
+[8. Encrypt Excel](#8)
 
 <p id = "1"></p>
 
@@ -321,4 +323,280 @@ for f in all_files:
 
     if days < 2:
          os.remove(file_path)
+```
+
+<p id = "7"></p>
+
+# 7. Call SAP from Python, R, VBS
+Though VBS is a little bit outdated, sometimes I still need to use it, mainly for calling SAP. My main programme tools are python and R, so integrating vbs to python/R is super important.
+
+For VBS script, we can record scripts in SAP. But in order to run the script successfully, extra codes are needed.
+
+VBS scripts are as follows:
+```vb
+' Extra codes
+Set WSHShell = CreateObject("WScript.Shell")
+
+SAPGUIPath = "C:\Program Files (x86)\SAP\FrontEnd\SAPgui\"
+Name = """CCMS UP2  Production IS-UT 6.08"""
+SID = "UP2"
+'Name = """CCMS UQ4  Quality Assurance IS-UT 6.08"""
+'SID = "UQ4"
+InstanceNo = "01"
+
+errCounter = 0
+errCounter_2 = 0
+    
+Do
+
+	On Error Resume Next
+	err.number = 0
+	WScript.Sleep 1000
+	errCounter = errCounter + 1
+
+    Set SapGuiAuto = GetObject("SAPGUI")
+    Set SAPGuiApp = SapGuiAuto.GetScriptingEngine
+    Set Connection = SAPGuiApp.Children(0)
+    Set session = Connection.Children(0)
+	
+	If err.number = 0 Then
+		pos_lookFor = InStr(1, session.ActiveWindow.Children.Item(1).Children.Item(3).Text, "the network", 1)
+		If (pos_lookFor > 0 And session.ActiveWindow.Name = "wnd[1]") Then
+        	session.findById("wnd[1]/tbar[0]/btn[0]").press
+    	End If
+		If session.ActiveWindow.Name = "wnd[0]" Then Exit Do
+	Else
+		If errCounter <= 1 Then
+			WSHShell.Exec SAPGUIPath & "sapgui.exe " & Name & " " & InstanceNo
+			Set WSHShell = Nothing
+		End If
+	End If
+
+Loop While (errCounter <= 7)
+
+'scripts recorded from SAP
+strUser = CreateObject("WScript.Network").UserName
+outputLocation = "xxx"
+fileName = "xxx"
+
+session.findById("wnd[0]").maximize
+session.findById("wnd[0]/tbar[0]/okcd").text = "tcode"
+session.findById("wnd[0]").sendVKey 0
+session.findById("wnd[0]/usr/ctxtS_VDAY-LOW").text = Day(Date-7) & "." & Month(Date-7) & "." & Year(Date-7)
+session.findById("wnd[0]/usr/ctxtS_VDAY-HIGH").text = Day(Date-1) & "." & Month(Date-1) & "." & Year(Date-1)
+session.findById("wnd[0]/usr/ctxtS_VDAY-HIGH").setFocus
+session.findById("wnd[0]/usr/ctxtS_VDAY-HIGH").caretPosition = 10
+session.findById("wnd[0]/usr/btn%_S_PROF_%_APP_%-VALU_PUSH").press
+session.findById("wnd[1]/tbar[0]/btn[16]").press
+session.findById("wnd[1]/tbar[0]/btn[16]").press
+session.findById("wnd[1]/tbar[0]/btn[24]").press
+session.findById("wnd[1]/tbar[0]/btn[8]").press
+session.findById("wnd[0]/tbar[1]/btn[8]").press
+session.findById("wnd[0]/tbar[1]/btn[46]").press
+session.findById("wnd[0]/tbar[1]/btn[43]").press
+session.findById("wnd[1]/tbar[0]/btn[0]").press
+session.findById("wnd[1]/tbar[0]/btn[0]").press
+session.findById("wnd[1]/usr/ctxtDY_PATH").text = outputLocation
+session.findById("wnd[1]/usr/ctxtDY_FILENAME").text = fileName
+session.findById("wnd[1]/usr/ctxtDY_FILENAME").caretPosition = 7
+session.findById("wnd[1]/tbar[0]/btn[0]").press
+session.findById("wnd[0]/tbar[0]/btn[12]").press
+session.findById("wnd[0]/tbar[0]/btn[12]").press
+session.findById("wnd[0]/tbar[0]/btn[12]").press
+```
+
+Above codes would be saved in a vbs file, which can be directly called from R or Python. Let's say the vbs file name is **test.vbs**, then the programmes can work this way:
+
+```R
+pathofvbscript = "C:/test.vbs"
+shell(shQuote(normalizePath(pathofvbscript)), "cscript", flag = "//nologo")
+```
+
+```py
+vbscript_file = r"C:\\test.vbs"
+output = subprocess.check_output(['cscript.exe', '//nologo', vbscript_file], universal_newlines=True)
+```
+
+What if we don't want to call another programme inside, but instead would like to integrate it. I've only figured out the way to do it with python and excel VBA.
+
+Codes will also be uploaded.
+
+VBA codes:
+```vb
+Sub sapLoop()
+
+Dim sap_session As Object
+Set sap_session = declareSAP
+
+With sap_session
+    .findById("wnd[0]/tbar[0]/okcd").Text = "your tcode"
+    'SAP codes
+End With
+
+End Sub
+
+
+Function declareSAP() As Object
+
+On Error GoTo Err_NoSAP
+Set WSHShell = CreateObject("WScript.Shell")
+
+AnnoyingPopUpWinTitle = "SAP"
+TargetWinTitle = "SAP Easy Access"
+SAPGUIPath = "C:\Program Files (x86)\SAP\FrontEnd\SAPgui\"
+Name = """CCMS UP2  Production IS-UT 6.08"""
+SID = "UP2"
+'Name = """CCMS UQ4  Quality Assurance IS-UT 6.08"""
+'SID = "UQ4"
+InstanceNo = "01"
+
+If IsObject(WSHShell) Then
+
+    WSHShell.Exec SAPGUIPath & "sapgui.exe " & Name & " " & InstanceNo
+    Set WSHShell = Nothing
+    
+End If
+
+On Error GoTo waiting_SAP
+
+    counter = 0
+    
+    Do
+nextLoop:
+        Application.Wait (Now + TimeValue("00:00:01"))
+        counter = counter + 1
+        If counter > 7 Then GoTo Err_NoSAP
+        Set SapGuiAuto = GetObject("SAPGUI")
+        Set SAPGuiApp = SapGuiAuto.GetScriptingEngine
+        Set Connection = SAPGuiApp.Children(0)
+        Set sap_session = Connection.Children(0)
+        
+        On Error Resume Next
+        pos_lookFor = InStr(1, sap_session.ActiveWindow.Children.Item(1).Children.Item(3).Text, "the network", 1)
+        pos_lookFor_2 = InStr(1, sap_session.findById("/app/con[0]/ses[0]/wnd[1]/usr/sub/1[0,0]/sub/1/2[0,2]/lbl[0,2]").rowtext, "the network", 1)
+        On Error GoTo 0
+        
+        If ((pos_lookFor > 0 Or pos_lookFor_2 > 0) And sap_session.ActiveWindow.Name = "wnd[1]") Then
+            sap_session.findById("wnd[1]/tbar[0]/btn[0]").press
+        End If
+        
+    Loop While sap_session.ActiveWindow.Name <> "wnd[0]"
+
+On Error GoTo 0
+
+On Error GoTo 0
+
+If (Connection.Children.Count > 1) Then GoTo Err_TooManySAP
+
+Set declareSAP = sap_session
+
+Exit Function
+
+Err_TooManySAP:
+MsgBox "More than one SAP session is identified. Please open only one SAP session."
+End
+
+Err_NoSAP:
+MsgBox "Failed to launch SAP"
+End
+
+waiting_SAP:
+Resume nextLoop
+
+End Function
+```
+
+Python code can only work when SAP and tcode are both open or closed.
+```python
+import sys
+import win32com.client
+import subprocess
+import time
+import os
+
+# Check a process is running
+def process_exists(process_name):   
+    call = 'TASKLIST', '/FI', 'imagename eq %s' % process_name
+    # use buildin check_output right away
+    output = subprocess.check_output(call).decode()
+    # check in last line for process name
+    last_line = output.strip().split('\r\n')[-1]
+    # because Fail message could be translated
+    return last_line.lower().startswith(process_name.lower())
+
+# If SAP is not opened, then open SAP
+if not process_exists("saplogon.exe"):
+    subprocess.call(r'"C:\Program Files (x86)\SAP\FrontEnd\SAPgui\sapshcut.exe" -system=UP2 -client=100')
+    time.sleep(5)
+
+try:
+
+    SapGuiAuto = win32com.client.GetObject("SAPGUI")
+    if not type(SapGuiAuto) == win32com.client.CDispatch:
+        exit()
+
+    application = SapGuiAuto.GetScriptingEngine
+    if not type(application) == win32com.client.CDispatch:
+        SapGuiAuto = None
+        exit()
+
+    connection = application.Children(0)
+    if not type(connection) == win32com.client.CDispatch:
+        application = None
+        SapGuiAuto = None
+        exit()
+
+    session = connection.Children(0)
+    if not type(session) == win32com.client.CDispatch:
+        connection = None
+        application = None
+        SapGuiAuto = None
+        exit()
+        
+
+    try:
+        if session.findById("wnd[1]"):
+            session.findById("wnd[1]").sendVKey(0)
+    except:
+        pass
+
+    # vbs code
+    session.findById("wnd[0]").maximize()
+    session.findById("wnd[0]/tbar[0]/okcd").text = "tcode"
+    session.findById("wnd[0]").sendVKey(0)
+    session.findById("wnd[0]/usr/btn%PS06004_1000").press()
+    session.findById("wnd[0]/usr/ctxtSEL_DEV-LOW").text = "xxxx"
+    session.findById("wnd[0]/usr/ctxtSEL_DEV-LOW").caretPosition = 7
+    session.findById("wnd[0]/usr/btn%PS33072_1000").press()
+    session.findById("wnd[0]/tbar[1]/btn[8]").press()  
+    session.findById("wnd[0]/usr/cntlBCALVC_EVENT2_D100_C1/shellcont/shell").pressToolbarContextButton("&MB_EXPORT")
+    session.findById("wnd[0]/usr/cntlBCALVC_EVENT2_D100_C1/shellcont/shell").selectContextMenuItem("&XXL")
+    session.findById("wnd[1]/tbar[0]/btn[0]").press()
+    session.findById("wnd[1]/usr/ctxtDY_PATH").text = "c:\\temp"
+    session.findById("wnd[1]/usr/ctxtDY_FILENAME").text = "EXPORT.XLSX"
+    session.findById("wnd[1]/usr/ctxtDY_FILENAME").caretPosition = 11
+    session.findById("wnd[1]/tbar[0]/btn[0]").press()
+
+except Exception as e:
+    print(sys.exc_info()[0])
+
+finally:
+    session = None
+    connection = None
+    application = None
+    SapGuiAuto = None
+```
+<p id = "8"></p>
+
+# 8. Encrypt Excel
+Python can help encrypt excel files. 
+```python
+import xlwings as xw
+
+app = xw.App(visible=True,add_book=False)
+wb = app.books.open(filepath)
+wb.api.Password = 'xxxx'
+wb.save()
+wb.close()
+app.quit()
 ```
