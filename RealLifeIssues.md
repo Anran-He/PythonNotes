@@ -600,3 +600,53 @@ wb.save()
 wb.close()
 app.quit()
 ```
+
+# 9. Generate variables with consecutive numbers in names
+I have a data frame, and I want to save every 200 rows into a separate data frame. Previously I did it in a tedious way:
+
+```python
+df_1 = df[0:199]
+df_2 = df[200:399]
+```
+
+But there is a better way to achieve this:
+```python
+n = 200   # Number of meter to split per file
+N = math.ceil(len(df) / n)
+d = {}
+
+for i in range(1,N+1):
+    d["df_{}".format(i)] = df[n*(i-1):n*i]
+```
+
+Currently I can only put data frames into a dictionary, with data frame names as keys and data frames as values.
+
+# 10. Print elements from two lists in pairs
+There are two lists, and I want to print elements in pairs (i.e. print the first elements from two lists together, and then second... ) in html format.
+```python
+list1 = ["Anna","Bob","Cindy"]
+list2 = [1,2,3]
+pair_string = '<br>'.join(f'{item1} {item2}' for item1,item2 in zip(list_1,list2))
+```
+
+# 11. formula array
+When using xlwings to manipulate excel, I found that inserting formula with multiple sheet names always caused error. "@" would be automatically added in front of sheet names.
+![Alt text](image-12.png)
+
+The codes are:
+```python
+ws.range('C2').formula="=INDEX('result'!$D$2:$D$337,MATCH(1,(A2='result'!$A$2:$A$337)*(B2='result'!$B$2:$B$337),0),1)"
+```
+
+I searched a lot and found a way to avoid "@":
+```python
+ws.range('C2').formula_array="=INDEX('result'!$D$2:$D$337,MATCH(1,(A2='result'!$A$2:$A$337)*(B2='result'!$B$2:$B$337),0),1)"
+```
+
+I haven't figured out the reason though.
+
+# 12. list comprehension
+
+
+# 13. copy excel to email
+
