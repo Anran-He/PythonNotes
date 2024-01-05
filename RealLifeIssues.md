@@ -630,7 +630,8 @@ pair_string = '<br>'.join(f'{item1} {item2}' for item1,item2 in zip(list_1,list2
 ```
 
 # 11. formula array
-When using xlwings to manipulate excel, I found that inserting formula with multiple sheet names always caused error. "@" would be automatically added in front of sheet names.
+When using xlwings to manipulate excel, I found that inserting formula with multiple sheet names always caused error. "@" would be automatically added in front of sheet names.  
+
 ![Alt text](image-12.png)
 
 The codes are:
