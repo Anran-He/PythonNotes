@@ -6,17 +6,17 @@
 [5. Pandas: convert numerical column (with NA) to integer data type](#5)  
 [6. Delete files older than N days](#6)   
 [7. Call SAP from Python, R, VBS](#7)  
-[8. Encrypt Excel](#8)
-[9. generate variables with consecutive numbers in names](#9)
-[10. Print Elements From Two Lists in Pairs](#10-print-elements-from-two-lists-in-pairs)
-[11. Formula Array](#11-formula-array)
-[12. Lambda Function](#12-lambda-function)
-[13. Map Function](#13-map-function)
-[14. Filter Function](#14-filter-function)
-[15. Reduce Function](#15)
-[16. List Comprehension](#16-list-comprehension)
-[17. Copy Excel to Email](#17-copy-excel-to-email)
-[18. Bitwise Operators](#18)
+[8. Encrypt Excel](#8)  
+[9. generate variables with consecutive numbers in names](#9)  
+[10. Print Elements From Two Lists in Pairs](#10-print-elements-from-two-lists-in-pairs)  
+[11. Formula Array](#11-formula-array)  
+[12. Lambda Function](#12-lambda-function)  
+[13. Map Function](#13-map-function)  
+[14. Filter Function](#14-filter-function)  
+[15. Reduce Function](#15)  
+[16. List Comprehension](#16-list-comprehension)  
+[17. Copy Excel to Email](#17-copy-excel-to-email)  
+[18. Bitwise Operators](#18)  
 
 <p id = "1"></p>
 
@@ -1024,3 +1024,5 @@ eg: 5 << 2 => 101 => 10100 => 20
 The >> operator performs a right shift on a number. This operator takes two operands: the first operand is the number to be shifted, and the second operand is the number of bits to shift it by.
 eg : 64 >> 3 => 1000000 => 1000 => 8  
 Right shift can be used to perform division by powers of 2. So 64 >> 3 equals to 64 / 2 ^ 3 = 8.
+
+
