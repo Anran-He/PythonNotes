@@ -1,12 +1,22 @@
 # Contents
 [1. Pass argument to Python from command line](#1)  
-[2. CVS Reader](#2)  
+[2. CSV Reader](#2)  
 [3. Web Scraping With Selenium](#3)  
 [4. Convert Rows To Columns And Columns To Rows](#4)  
 [5. Pandas: convert numerical column (with NA) to integer data type](#5)  
 [6. Delete files older than N days](#6)   
 [7. Call SAP from Python, R, VBS](#7)  
 [8. Encrypt Excel](#8)
+[9. generate variables with consecutive numbers in names](#9)
+[10. Print Elements From Two Lists in Pairs](#10-print-elements-from-two-lists-in-pairs)
+[11. Formula Array](#11-formula-array)
+[12. Lambda Function](#12-lambda-function)
+[13. Map Function](#13-map-function)
+[14. Filter Function](#14-filter-function)
+[15. Reduce Function](#15)
+[16. List Comprehension](#16-list-comprehension)
+[17. Copy Excel to Email](#17-copy-excel-to-email)
+[18. Bitwise Operators](#18)
 
 <p id = "1"></p>
 
@@ -374,6 +384,8 @@ Do
 
 Loop While (errCounter <= 7)
 
+
+
 'scripts recorded from SAP
 strUser = CreateObject("WScript.Network").UserName
 outputLocation = "xxx"
@@ -586,6 +598,76 @@ finally:
     application = None
     SapGuiAuto = None
 ```
+
+Updated: A more convenient way
+```python
+
+os.system('cmd /c "taskkill /f /im saplogon.exe"')
+userName = os.path.expanduser('~')[9:]
+
+# call SAP
+subprocess.call(r'"C:\Program Files\SAP\FrontEnd\SAPgui\sapshcut.exe" -system=UP2 -client=100 -user={userName}')
+
+time.sleep(5)
+
+try:
+
+    SapGuiAuto = win32com.client.GetObject("SAPGUI")
+    if not type(SapGuiAuto) == win32com.client.CDispatch:
+        exit()
+
+    application = SapGuiAuto.GetScriptingEngine
+    if not type(application) == win32com.client.CDispatch:
+        SapGuiAuto = None
+        exit()
+
+    connection = application.Children(0)
+    if not type(connection) == win32com.client.CDispatch:
+        application = None
+        SapGuiAuto = None
+        exit()
+
+    session = connection.Children(0)
+    if not type(session) == win32com.client.CDispatch:
+        connection = None
+        application = None
+        SapGuiAuto = None
+        exit()
+        
+
+    try:
+        if session.findById("wnd[1]"):
+            session.findById("wnd[1]").sendVKey(0)
+    except:
+        pass
+
+    # vba code
+    session.findById("wnd[0]").maximize()
+    session.findById("wnd[0]/tbar[0]/okcd").text = "EL31"
+    session.findById("wnd[0]").sendVKey(0)
+    session.findById("wnd[0]/usr/btn%PS06004_1000").press()
+    session.findById("wnd[0]/usr/ctxtSEL_DEV-LOW").text = "7045000"
+    session.findById("wnd[0]/usr/ctxtSEL_DEV-LOW").caretPosition = 7
+    session.findById("wnd[0]/usr/btn%PS33072_1000").press()
+    session.findById("wnd[0]/tbar[1]/btn[8]").press()
+    session.findById("wnd[0]/usr/cntlBCALVC_EVENT2_D100_C1/shellcont/shell").pressToolbarContextButton("&MB_EXPORT")
+    session.findById("wnd[0]/usr/cntlBCALVC_EVENT2_D100_C1/shellcont/shell").selectContextMenuItem("&XXL")
+    session.findById("wnd[1]/tbar[0]/btn[0]").press()
+    session.findById("wnd[1]/usr/ctxtDY_PATH").text = "c:\\temp"
+    session.findById("wnd[1]/usr/ctxtDY_FILENAME").text = "EXPORT.XLSX"
+    session.findById("wnd[1]/usr/ctxtDY_FILENAME").caretPosition = 11
+    session.findById("wnd[1]/tbar[0]/btn[0]").press()
+
+except Exception as e:
+    print(sys.exc_info()[0])
+
+finally:
+    session = None
+    connection = None
+    application = None
+    SapGuiAuto = None
+```
+
 <p id = "8"></p>
 
 # 8. Encrypt Excel
@@ -600,6 +682,8 @@ wb.save()
 wb.close()
 app.quit()
 ```
+
+<p id = "9"></p>
 
 # 9. Generate variables with consecutive numbers in names
 I have a data frame, and I want to save every 200 rows into a separate data frame. Previously I did it in a tedious way:
@@ -621,6 +705,16 @@ for i in range(1,N+1):
 
 Currently I can only put data frames into a dictionary, with data frame names as keys and data frames as values.
 
+Update: I found a new way to achieve this, which is much easier!
+```python
+n = 200
+list_df = [df[i:i+n] for i in range(0,df.shape[0],n)]
+for i in range(0,len(list_df)):
+    list_df[i].to_csv("test.csv", index=False, header=False)
+```
+
+<p id = "10"></p>
+
 # 10. Print elements from two lists in pairs
 There are two lists, and I want to print elements in pairs (i.e. print the first elements from two lists together, and then second... ) in html format.
 ```python
@@ -629,9 +723,10 @@ list2 = [1,2,3]
 pair_string = '<br>'.join(f'{item1} {item2}' for item1,item2 in zip(list_1,list2))
 ```
 
-# 11. formula array
-When using xlwings to manipulate excel, I found that inserting formula with multiple sheet names always caused error. "@" would be automatically added in front of sheet names.  
+<p id = "11"></p>
 
+# 11. formula array
+When using xlwings to manipulate excel, I found that inserting formula with multiple sheet names always caused error. "@" would be automatically added in front of sheet names.
 ![Alt text](image-12.png)
 
 The codes are:
@@ -646,8 +741,286 @@ ws.range('C2').formula_array="=INDEX('result'!$D$2:$D$337,MATCH(1,(A2='result'!$
 
 I haven't figured out the reason though.
 
-# 12. list comprehension
+<p id = "12"></p>
+
+# 12. lambda function
+A lambda function is a small anonymous function.  
+A lambda function can take any number of arguments, but can only one expression.
+
+```py
+x = lambda a : a * 4
+print(x(3))
+
+y = lambda a, b, c : a + b * c
+print(y(1,2,3))
+```
+
+Use lambda function inside another function.
+```py
+def multiple(n):
+    return lambda a : a * n
+
+doubler = multiple(2)
+
+print(doubler(34))
+
+```
+
+<p id = "13"></p>
+
+# 13. map function
+Syntax: map(function, iterable)  
+The returned value from map() (map object) can be paased to functions like list() (to create a list), set() (to create a set).
+
+### Basic usage of map()
+```py
+def double(n):
+    return n * 2
+
+numbers = [3,4,5,6]
+result = map(double,numbers)
+print(list(result))
+```
+
+### map() with lambda function
+```py
+numbers = (3,4,5,6)
+result = map(lambda x: x * 2, numbers)
+print(list(result))
+```
+
+### Add two lists
+```py
+list1 = [1,2,3]
+list2 = [4,5,6]
+result = map(lambda x, y: x + y, list1, list2)
+
+print(list(result))
+```
+
+<p id = "14"></p>
+
+# 14. filter function
+Syntax: filter(function, iterable)
+
+```py
+l = [1,2,3,4,5]
+result = filter(lambda x : x % 2 == 0, l)
+
+print(list(result))
+```
+
+<p id = "15"></p>
+
+# 15. reduce function
+Syntax: reduce(function, sequence)
+
+```py
+from functools import reduce
+
+lis = [1,2,3,4,5]
+print(reduce(lambda a, b: a + b, lis)) # 15
+
+lis = [3,22,5,77,43]
+print(reduce(lambda a, b: a if a > b else b, lis)) # 77 (maximum value)
+
+```
+
+<p id = "16"></p>
+
+# 16. list comprehension
+Syntax: newList = [expression(element) **for** element **in** oldList **if** condition]
+
+## basic grammar
+### Iteration with list comprehension
+```py
+number = [n for n in range(0,10)]
+```
+
+### If condition with list comprehension
+```py
+odd = [n for n in range(10) if n % 2 == 1]
+
+# multiple conditions
+lis = [n for n in range(100) if n % 2 == 0 if x % 6 == 0]
+
+# if-else condition
+lis = [n * 2 if n % 2 == 0 else for n in range(10)]
+```
 
 
-# 13. copy excel to email
+### Nested list comprehension
+```py
+# flatten list of list
+list_of_list = [[1,2,3],[4,5,6],[7,8]]
 
+[y for x in list_of_list for y in x]
+
+# transpose matrix
+matrix = [[1,2,3],[4,5,6],[7,8,9]]
+[[row[i] for row in matrix] for i in range(3)]
+
+# transpose matrix - another way using for loops
+transposed = []
+
+for i in range(3):
+    transposed_row = []
+    for row in matrix:
+        transposed_row.append(row[i])
+    transposed.append(transposed_row)
+
+# create matrix
+matrix = [[2 for col in range(4)] for row in range(2)]
+print(matrix) # [[2, 2, 2, 2], [2, 2, 2, 2]]
+
+# create matrix - another way using for loops
+matrix = []
+
+for i in range(2):
+    rows = []
+    matrix.append(rows)
+
+    for row in range(4):
+        rows.append(2)
+
+```
+
+## be used as an alternative to for loops, lambda function as well as the functions map(), filter() and reduce().
+### For Loops
+```py
+numbers = range(10)
+odd_square = []
+
+for n in numbers:
+    if n % 2 == 1:
+        odd.append(n**2)
+```
+
+Substitute to this for loop is:
+```py
+odd_square = [n for n in range(10) if n %2 == 1]
+```
+
+### map function
+```py
+numbers = [1,2,3,4]
+
+double = map(lambda x : x * 2, numbers)
+
+print(list(double))
+```
+
+Substitute to this map function is:
+```py
+double = [x * 2 for x in numbers]
+```
+
+### filter function
+```py
+numbers = [1,3,5,4]
+even_numbers = filter(lambda x : x % 2 == 0, numbers)
+
+list(even_numbers)
+```
+
+Substitute to this filter function is:
+```py
+even_numbers = [x for x in numbers if x % 2 == 1]
+```
+
+### reduce function
+```py
+numbers = [1,2,3,4]
+total = reduce(lambda a, b: a + b, numbers)
+```
+
+Substitute to this reduce function is:
+```py
+numbers = [1,2,3,4]
+total = sum([x for x in numbers])
+```
+
+## Practice: find the second largest number in a list
+```py
+lis = [ 2,5,4,1,45.32]
+max_sub = [x for x in lis if x < max(lis)]
+print(max(max_sub))
+```
+
+<p id = "17"></p>
+
+# 17. copy excel to email
+Sometimes I want copy excel to email, the format would be lost. A workaround is to copy excel to word first, and then save word to html. In this way, the CSS style would be kept.
+```py
+def excel_2_html(xl_path, sheet, text_range):
+    # xl_path：excel文件路径
+    # sheet: 要复制的sheet
+    # text_range: 复制范围
+    html_path = r'C:\\Temp\\tmp.html'    # 临时HTML文件
+    print('html_path: '+ html_path)
+    ExcelAPP = win32.DispatchEx('Excel.Application')
+    WordApp = win32.DispatchEx("Word.Application")
+    ExcelAPP.Visible = False
+    ExcelAPP.DisplayAlerts = False
+    WordApp.Visible = False
+    WordApp.DisplayAlerts = False
+
+    doc = WordApp.Documents.Add()
+    book = ExcelAPP.Workbooks.Open(xl_path)
+    sht = book.Worksheets(sheet)
+    sht.Range(text_range).Copy()
+    # 先贴到Word
+    doc.Content.PasteExcelTable(False, False, False)
+    # 再把Word存为HTML格式
+    doc.SaveAs(html_path, FileFormat=10)
+    ExcelAPP.Workbooks.Close()
+    ExcelAPP.Application.Quit()
+    WordApp.Documents.Close()
+    WordApp.Application.Quit()
+
+    f = open(html_path, "r")
+    text_html = f.read()
+    f.close()
+    return text_html
+```
+
+<p id = "18"></p>
+
+# 18. bitwise operators
+Bitwise operators can perform bitwise operations on binary numbers. There are several bitwise operators in python:
+- & (AND)
+- | (OR)
+- ^ (XOR)
+- ~ (NOR)
+- << (left shift operator)
+- >> (right shift operator)
+
+Binary system is a numbering system that uses only two digits, 0 and 1, to represent all numbers.
+
+- &
+The & operator performs a bitwise AND operation on two numbers. This operator compares the binary representation of two numbers bit by bit, and returns a new number where each bit is 1 only if the corresponding bits of the input number are also 1.  
+eg: 5 & 3 => 101 & 11 => 1  
+Practice of &: check if a number is even or odd.
+```py
+def is_odd(number):
+    return number & 1 == 1
+
+print(is_odd(3)) # True
+```
+
+- |
+The | operator performs a bitwise OR operation on two numbers. This operator compares the binary representation of two numbers bit by bit, and returns a new number where each bit is 1 if the corresponding bits of either input number are 1.
+eg: 5 | 3 => 101 | 11 => 111 => 7
+
+- ^
+The ^ operator performs a bitwise XOR operation on two numbers. This operator compares the binary representation of two numbers bit by bit, and returns a new number where each bit is 1 if the corresponding bits of the input numbers are different.
+eg: 5 | 3 => 101 | 011 => 110 => 6
+
+- <<
+The << operator performs a left shift on a number. This operator takes two operands: the first operand is the number to be shifted, and the second operand is the number of bits to shift it by.
+eg: 5 << 2 => 101 => 10100 => 20
+
+- >>
+The >> operator performs a right shift on a number. This operator takes two operands: the first operand is the number to be shifted, and the second operand is the number of bits to shift it by.
+eg : 64 >> 3 => 1000000 => 1000 => 8  
+Right shift can be used to perform division by powers of 2. So 64 >> 3 equals to 64 / 2 ^ 3 = 8.
